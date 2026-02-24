@@ -1,51 +1,104 @@
 import streamlit as st
 
-st.set_page_config(page_title="Rezept-Planer", page_icon="🍳")
-st.title("🍳 Dein persönlicher Mahlzeiten-Planer")
+st.set_page_config(page_title="Rezept-Profi", page_icon="👨‍🍳", layout="wide")
 
-# Auswahl-Speicher vorbereiten
+# Styling für die Buttons
+st.markdown("""
+    <style>
+    div.stButton > button {
+        width: 100%;
+        border-radius: 10px;
+        height: 3em;
+        background-color: #f0f2f6;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+st.title("👨‍🍳 Dein smarter Rezept-Planer")
+
 if 'auswahl' not in st.session_state:
     st.session_state.auswahl = {"gemüse": [], "carbs": "", "protein": "", "sauce": "", "stil": ""}
 
-# Navigation
-step = st.sidebar.radio("Navigation", ["1. Gemüse", "2. Kohlenhydrate", "3. Protein", "4. Sauce", "5. Stil", "6. Ergebnis"])
+# Navigation oben
+step = st.select_slider("Schritt für Schritt zum Essen", options=["Gemüse", "Kohlenhydrate", "Protein", "Sauce", "Stil", "Rezept"])
 
-if step == "1. Gemüse":
-    st.header("🥦 Wähle dein Gemüse")
-    gemuese_liste = ["Tomaten", "Zucchini", "Paprika", "Brokkoli", "Spinat", "Karotten", "Pilze", "Zwiebeln", "Lauch", "Auberginen"]
-    st.session_state.auswahl["gemüse"] = st.multiselect("Was hast du da?", gemuese_liste)
-
-elif step == "2. Kohlenhydrate":
-    st.header("🍝 Kohlenhydrate")
-    kategorie = st.selectbox("Kategorie", ["Kartoffeln", "Nudeln", "Reis", "Alternative"])
-    options = {
-        "Kartoffeln": ["Süßkartoffel", "Festkochend", "Mehlig"],
-        "Nudeln": ["Spaghetti", "Penne", "Fusilli"],
-        "Reis": ["Basmati", "Wildreis", "Jasmin"],
-        "Alternative": ["Quinoa", "Couscous", "Hirse", "Steckrübe"]
-    }
-    st.session_state.auswahl["carbs"] = st.selectbox("Welche Sorte?", options[kategorie])
-
-elif step == "3. Protein":
-    st.header("🥩 Protein-Quelle")
-    st.session_state.auswahl["protein"] = st.radio("Was wählst du?", ["Rind", "Hähnchen", "Fisch", "Tofu", "Linsen", "Kein Tier"])
-
-elif step == "4. Sauce":
-    st.header("🥛 Saucenbasis")
-    st.session_state.auswahl["sauce"] = st.radio("Basis:", ["Sahne", "Kokosmilch", "Tomatenpassata", "Gemüsebrühe"])
-
-elif step == "5. Stil":
-    st.header("🥗 Ernährungsstil")
-    st.session_state.auswahl["stil"] = st.radio("Wie soll es sein?", ["Omnivor", "Vegetarisch", "Vegan"])
-
-elif step == "6. Ergebnis":
-    st.header("🍽️ Dein Plan & Einkaufsliste")
-    a = st.session_state.auswahl
-    st.success(f"Bereit für ein {a['stil']}es Gericht!")
-    st.write(f"Kombination: **{a['protein']}** mit **{a['carbs']}** und **{', '.join(a['gemüse'])}**.")
+# --- 1. GEMÜSE RASTER ---
+if step == "Gemüse":
+    st.header("🥦 Welches Gemüse hast du?")
+    gemuese_arten = ["🍅 Tomate", "🥒 Zucchini", "🫑 Paprika", "🥦 Brokkoli", "🍃 Spinat", "🥕 Karotten", "🍄 Pilze", "🧅 Zwiebeln", "🌽 Mais", "🍆 Aubergine", "🥦 Blumenkohl", "🥬 Lauch", "🥗 Erbsen", "🧄 Knoblauch", "🎃 Kürbis"]
     
-    st.subheader("🛒 Einkaufsliste")
-    zutaten = a['gemüse'] + [a['carbs'], a['protein'], a['sauce']]
-    for z in zutaten:
-        if z != "Kein Tier":
-            st.write(f"- [ ] {z}")
+    # Erstellt ein Raster mit 3 Spalten
+    cols = st.columns(3)
+    for idx, g in enumerate(gemuese_arten):
+        if cols[idx % 3].button(g):
+            if g not in st.session_state.auswahl["gemüse"]:
+                st.session_state.auswahl["gemüse"].append(g)
+                st.toast(f"{g} hinzugefügt!")
+    
+    st.write("### Deine Auswahl:", ", ".join(st.session_state.auswahl["gemüse"]))
+    if st.button("Auswahl löschen"):
+        st.session_state.auswahl["gemüse"] = []
+        st.rerun()
+
+# --- 2. KOHLENHYDRATE ---
+elif step == "Kohlenhydrate":
+    st.header("🍝 Kohlenhydrate")
+    kat = st.radio("Kategorie wählen:", ["Kartoffeln", "Nudeln", "Reis", "Alternative"])
+    
+    opts = {
+        "Kartoffeln": ["Süßkartoffel", "Festkochend", "Mehlig", "Drillinge", "Pommes-Kartoffeln"],
+        "Nudeln": ["Spaghetti", "Penne", "Fusilli", "Tagliatelle", "Vollkornnudeln", "Glasnudeln"],
+        "Reis": ["Basmati", "Wildreis", "Jasmin", "Risotto-Reis", "Sushi-Reis"],
+        "Alternative": ["Quinoa", "Amaranth", "Couscous", "Hirse", "Steckrübe", "Bulgur", "Polenta", "Linsen-Pasta"]
+    }
+    st.session_state.auswahl["carbs"] = st.selectbox("Sorte wählen:", opts[kat])
+
+# --- 3. PROTEIN ---
+elif step == "Protein":
+    st.header("🥩 Protein")
+    st.session_state.auswahl["protein"] = st.radio("Was darf es sein?", 
+        ["Rind", "Hähnchen", "Schwein", "Lamm", "Lachs", "Kabeljau", "Garnelen", "Tofu", "Kichererbsen", "Linsen", "Eier", "Kein Tier"])
+
+# --- 4. SAUCE ---
+elif step == "Sauce":
+    st.header("🥛 Saucenbasis")
+    st.session_state.auswahl["sauce"] = st.radio("Basis:", 
+        ["Sahne", "Kokosmilch", "Tomatenpassata", "Gemüsebrühe", "Frischkäse", "Pesto", "Sojasauce", "Weißwein-Sud"])
+
+# --- 5. STIL ---
+elif step == "Stil":
+    st.header("🥗 Ernährungsstil")
+    st.session_state.auswahl["stil"] = st.radio("Art:", ["Omnivor (Alles)", "Vegetarisch", "Vegan"])
+
+# --- 6. ERGEBNIS & REZEPT ---
+elif step == "Rezept":
+    a = st.session_state.auswahl
+    if not a["gemüse"]:
+        st.warning("Bitte wähle zuerst Gemüse aus!")
+    else:
+        st.header("🍽️ Dein persönliches Rezept")
+        
+        # Simuliertes Rezept (Logik)
+        titel = f"{a['stil']}e Pfanne mit {a['protein']} und {a['carbs']}"
+        st.subheader(titel)
+        
+        st.markdown(f"""
+        **Zutaten:**
+        * {', '.join(a['gemüse'])}
+        * {a['carbs']}
+        * {a['protein']}
+        * Basis: {a['sauce']}
+        * Gewürze: Salz, Pfeffer, Kräuter der Saison
+        
+        **Zubereitung:**
+        1. {a['carbs']} nach Packungsanweisung kochen.
+        2. {a['protein']} in einer Pfanne scharf anbraten, dann herausnehmen.
+        3. Das Gemüse ({', '.join(a['gemüse'])}) in derselben Pfanne dünsten.
+        4. Mit {a['sauce']} ablöschen und kurz köcheln lassen.
+        5. Alles vermengen und genießen!
+        """)
+        
+        st.subheader("🛒 Einkaufsliste")
+        for z in a['gemüse'] + [a['carbs'], a['protein'], a['sauce']]:
+            if "Kein Tier" not in z:
+                st.write(f"- [ ] {z}")
